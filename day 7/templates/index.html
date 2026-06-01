@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSync - Role Classification & ATS Scoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🎯 SkillSync</h1>
+                <p class="subtitle">Decision Tree Model for Role Classification & ATS Scoring</p>
+                <div class="model-status" id="modelStatus">Model Status: Loading...</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Input Form -->
+            <section class="input-section">
+                <div class="form-card">
+                    <h2>📋 Candidate Assessment</h2>
+                    <p class="form-description">Enter candidate metrics to evaluate role fit and calculate ATS score</p>
+                    
+                    <form id="predictionForm" onsubmit="handlePrediction(event)">
+                        <!-- Resume Score -->
+                        <div class="form-group">
+                            <label for="resumeScore">Resume Quality Score (0-100)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="resumeScore" name="resumeScore" min="0" max="100" 
+                                       value="75" step="1" required>
+                                <span class="slider-value" id="resumeValue">75</span>
+                            </div>
+                            <input type="range" id="resumeSlider" class="slider" min="0" max="100" value="75" 
+                                   oninput="updateSlider('resumeScore', this.value)">
+                            <small>How well does the resume match job requirements?</small>
+                        </div>
+
+                        <!-- Skill Gap -->
+                        <div class="form-group">
+                            <label for="skillGap">Skill Gap (0-100)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="skillGap" name="skillGap" min="0" max="100" 
+                                       value="20" step="1" required>
+                                <span class="slider-value" id="skillValue">20</span>
+                            </div>
+                            <input type="range" id="skillSlider" class="slider" min="0" max="100" value="20" 
+                                   oninput="updateSlider('skillGap', this.value)">
+                            <small>% of skills not matching (lower is better)</small>
+                        </div>
+
+                        <!-- Communication Score -->
+                        <div class="form-group">
+                            <label for="communicationScore">Communication Skills (0-100)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="communicationScore" name="communicationScore" min="0" max="100" 
+                                       value="80" step="1" required>
+                                <span class="slider-value" id="commValue">80</span>
+                            </div>
+                            <input type="range" id="commSlider" class="slider" min="0" max="100" value="80" 
+                                   oninput="updateSlider('communicationScore', this.value)">
+                            <small>Evaluate verbal and written communication</small>
+                        </div>
+
+                        <!-- Technical Score -->
+                        <div class="form-group">
+                            <label for="technicalScore">Technical Skills (0-100)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="technicalScore" name="technicalScore" min="0" max="100" 
+                                       value="85" step="1" required>
+                                <span class="slider-value" id="techValue">85</span>
+                            </div>
+                            <input type="range" id="techSlider" class="slider" min="0" max="100" value="85" 
+                                   oninput="updateSlider('technicalScore', this.value)">
+                            <small>Assess technical competency for the role</small>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">🔍 Evaluate Candidate</button>
+                            <button type="reset" class="btn btn-secondary">↻ Reset Form</button>
+                        </div>
+                    </form>
+
+                    <!-- Model Info -->
+                    <div class="model-info" id="modelInfo">
+                        <h3>Model Information</h3>
+                        <div id="infoContent" class="info-loading">Loading model details...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results -->
+            <section class="results-section">
+                <div id="resultCard" class="result-card hidden">
+                    <!-- Prediction Result -->
+                    <div class="result-header">
+                        <h2>✅ Assessment Results</h2>
+                        <span class="result-time" id="resultTime"></span>
+                    </div>
+
+                    <!-- Main Metrics -->
+                    <div class="metrics-container">
+                        <!-- ATS Score -->
+                        <div class="metric-card ats-score">
+                            <div class="metric-icon">📊</div>
+                            <div class="metric-content">
+                                <h3>ATS Score</h3>
+                                <div class="metric-value" id="atsScore">--</div>
+                                <div class="metric-bar">
+                                    <div class="metric-progress" id="atsProgress"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role Fit -->
+                        <div class="metric-card role-fit">
+                            <div class="metric-icon">🎯</div>
+                            <div class="metric-content">
+                                <h3>Role Fit</h3>
+                                <div class="metric-value" id="roleFit">--</div>
+                                <div class="metric-label" id="fitnessLabel">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Confidence -->
+                        <div class="metric-card confidence">
+                            <div class="metric-icon">💪</div>
+                            <div class="metric-content">
+                                <h3>Confidence</h3>
+                                <div class="metric-value" id="confidence">--</div>
+                                <div class="metric-bar">
+                                    <div class="metric-progress" id="confProgress"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Score Breakdown -->
+                    <div class="breakdown-section">
+                        <h3>📈 Score Breakdown</h3>
+                        <div class="breakdown-grid">
+                            <div class="breakdown-item">
+                                <label>Resume Quality</label>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" id="resumeBreakdown"></div>
+                                </div>
+                                <span id="resumeBreakValue">--</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <label>Skills Match</label>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" id="skillBreakdown"></div>
+                                </div>
+                                <span id="skillBreakValue">--</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <label>Communication</label>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" id="commBreakdown"></div>
+                                </div>
+                                <span id="commBreakValue">--</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <label>Technical Skills</label>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" id="techBreakdown"></div>
+                                </div>
+                                <span id="techBreakValue">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Insights -->
+                    <div class="insights-section">
+                        <h3>💡 Key Insights</h3>
+                        <ul class="insights-list" id="insightsList">
+                            <li class="loading">Generating insights...</li>
+                        </ul>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="recommendations-section" id="recommendationsSection">
+                        <h3>🚀 Recommendations</h3>
+                        <div id="recommendationsList" class="recommendations-list"></div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button onclick="exportResults()" class="btn btn-accent">📥 Export Results</button>
+                        <button onclick="resetResults()" class="btn btn-secondary">🔄 New Assessment</button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingCard" class="loading-card hidden">
+                    <div class="spinner"></div>
+                    <p>Processing assessment...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="errorCard" class="error-card hidden">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Error</h3>
+                    <p id="errorMessage"></p>
+                    <button onclick="resetResults()" class="btn btn-primary">Try Again</button>
+                </div>
+
+                <!-- Welcome State -->
+                <div id="welcomeCard" class="welcome-card">
+                    <div class="welcome-content">
+                        <div class="welcome-icon">👋</div>
+                        <h2>Welcome to SkillSync</h2>
+                        <p>Use the form on the left to assess a candidate's fit for a role.</p>
+                        <p>Our Decision Tree model combined with ATS scoring will provide comprehensive insights.</p>
+                        <div class="features">
+                            <p>✓ AI-powered role classification</p>
+                            <p>✓ Comprehensive ATS scoring</p>
+                            <p>✓ Detailed candidate insights</p>
+                            <p>✓ Actionable recommendations</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2026 SkillSync - AI-Powered Career Preparation Platform</p>
+            <p>Model: Decision Tree Classifier | Dataset: clean_resume_dataset.csv</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
