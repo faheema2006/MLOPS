@@ -109,7 +109,7 @@ http://localhost:5000
    - **Technical Skills** (0-100): Technical expertise
 
 2. **Submit Assessment**:
-   - Click "🔍 Evaluate Candidate" button
+   - Click "Evaluate Candidate" button
    - Wait for analysis to complete
 
 3. **Review Results**:
