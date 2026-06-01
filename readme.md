@@ -14,3 +14,5 @@ The Accuracy score for my own problem statemtent Dataset(ML models):
 10:KNN = 0.8185714285714286
 
 After comparing multiple machine learning models, Decision Tree Classifier provided the best performance with 96.4% accuracy and was therefore selected as the optimized model for the SkillSync platform.
+![Uploading Screenshot 2026-06-01 114106.png…]()
+![Uploading Screenshot 2026-06-01 114130.png…]()
