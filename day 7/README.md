@@ -245,14 +245,14 @@ C:\Users\FAHEEMA\OneDrive\MLOPS\SkillSync\clean_resume_dataset.csv
 - **Model Serialization**: Pickle
 
 ## Future Enhancements
-1. ✨ Multiple ML models comparison
-2. ✨ Resume parsing and automatic feature extraction
-3. ✨ Interview question generation based on gaps
-4. ✨ Candidate progress tracking
-5. ✨ Database integration for candidate records
-6. ✨ Advanced analytics dashboard
-7. ✨ Email report distribution
-8. ✨ Integration with ATS systems
+1. Multiple ML models comparison
+2. Resume parsing and automatic feature extraction
+3. Interview question generation based on gaps
+4. Candidate progress tracking
+5. Database integration for candidate records
+6. Advanced analytics dashboard
+7. Email report distribution
+8. Integration with ATS systems
 
 ## Notes
 - The model is trained on the `clean_resume_dataset.csv` file
