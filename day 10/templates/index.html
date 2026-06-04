@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Object Detection</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background:#f4f4f4;
+            margin:0;
+            padding:0;
+        }
+
+        .container{
+            width:700px;
+            margin:50px auto;
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            box-shadow:0 0 10px rgba(0,0,0,0.2);
+            text-align:center;
+        }
+
+        h1{
+            color:#333;
+        }
+
+        input[type=file]{
+            margin:20px;
+        }
+
+        button{
+            background:#007bff;
+            color:white;
+            border:none;
+            padding:12px 25px;
+            border-radius:5px;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        button:hover{
+            background:#0056b3;
+        }
+
+        .result{
+            margin-top:30px;
+            text-align:left;
+            background:#f8f9fa;
+            padding:15px;
+            border-radius:5px;
+        }
+
+        .error{
+            color:red;
+            font-weight:bold;
+            margin-top:20px;
+        }
+
+        pre{
+            white-space:pre-wrap;
+            word-wrap:break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>YOLOv8 Object Detection</h1>
+
+        <form action="/detect" method="POST" enctype="multipart/form-data">
+
+            <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
+
+            <br>
+
+            <button type="submit">
+                Detect Objects
+            </button>
+
+        </form>
+
+        {% if error %}
+            <div class="error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if result %}
+            <div class="result">
+                <h2>Detection Result</h2>
+
+                <pre>{{ result }}</pre>
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

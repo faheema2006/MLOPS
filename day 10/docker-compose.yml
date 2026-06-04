@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  yolo-inference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yolo-inference-api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./inputs:/app/inputs
+      - ./outputs:/app/outputs
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python app.py
+    restart: unless-stopped
+
+  yolo-batch-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yolo-batch-processor
+    volumes:
+      - ./inputs:/app/inputs
+      - ./outputs:/app/outputs
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python inference.py --dir /app/inputs
+    restart: on-failure

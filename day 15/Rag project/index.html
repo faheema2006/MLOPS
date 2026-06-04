@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Knowledge Base Assistant</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Dependencies via CDN -->
+    <!-- localForage (IndexedDB Wrapper) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+    <!-- Mammoth (DOCX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- Marked (Markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Knowledge Base -->
+        <aside class="sidebar-left" id="sidebar-left">
+            <div class="sidebar-header">
+                <div class="app-logo">
+                    <i data-lucide="brain-circuit" class="logo-icon"></i>
+                    <span>CognitiveKB</span>
+                </div>
+                <button class="theme-toggle" id="theme-toggle-btn" title="Toggle Theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+            </div>
+            
+            <div class="section-title">Knowledge Sources</div>
+            
+            <!-- Upload Dropzone -->
+            <div class="upload-zone" id="upload-zone">
+                <input type="file" id="file-input" multiple accept=".pdf,.docx,.txt,.md" style="display: none;">
+                <i data-lucide="upload-cloud" class="upload-icon"></i>
+                <div class="upload-text">
+                    <strong>Choose files</strong> or drag here
+                    <span class="upload-subtext">PDF, DOCX, TXT, MD</span>
+                </div>
+            </div>
+
+            <!-- URL Input -->
+            <div class="url-input-container">
+                <div class="input-group">
+                    <input type="url" id="url-input" placeholder="Paste web article URL..." aria-label="Web URL">
+                    <button id="add-url-btn" title="Fetch and index webpage"><i data-lucide="plus"></i></button>
+                </div>
+                <div class="proxy-toggle">
+                    <input type="checkbox" id="use-proxy" checked>
+                    <label for="use-proxy" title="Fetch via CORS proxy for external pages">Use CORS Proxy helper</label>
+                </div>
+            </div>
+
+            <div class="file-list-header">
+                <span id="indexed-count-text">Indexed Documents (0)</span>
+                <button id="clear-all-btn" class="text-btn danger-text" title="Delete all indexed data">
+                    <i data-lucide="trash-2"></i> Clear All
+                </button>
+            </div>
+
+            <!-- Documents List -->
+            <div class="file-list" id="file-list">
+                <!-- Dynamically populated files -->
+                <div class="empty-list-message" id="empty-list-msg">
+                    No documents indexed yet. Upload documents or add URLs to populate your knowledge base.
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="kb-stats" id="kb-stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">Total Text Chunks:</span>
+                    <span class="stat-value" id="stat-chunks">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Characters:</span>
+                    <span class="stat-value" id="stat-chars">0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace: Chat -->
+        <main class="chat-container">
+            <!-- Mobile Menu Header -->
+            <header class="mobile-header">
+                <button id="mobile-menu-left" class="icon-btn"><i data-lucide="menu"></i></button>
+                <div class="mobile-title">CognitiveKB</div>
+                <button id="mobile-menu-right" class="icon-btn"><i data-lucide="settings"></i></button>
+            </header>
+
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <div class="chat-title-info">
+                    <h2>Knowledge Conversation</h2>
+                    <p id="chat-subtitle">Grounded in 0 documents</p>
+                </div>
+                <div class="header-actions">
+                    <button id="clear-chat-btn" class="btn btn-secondary btn-sm" title="Clear chat history">
+                        <i data-lucide="rotate-ccw"></i> Clear Chat
+                    </button>
+                </div>
+            </header>
+
+            <!-- Messages Stream -->
+            <div class="messages-stream" id="messages-stream">
+                <!-- Welcome View -->
+                <div class="welcome-view" id="welcome-view">
+                    <div class="welcome-icon-box">
+                        <i data-lucide="sparkles" class="welcome-icon"></i>
+                    </div>
+                    <h1>Personal Knowledge Assistant</h1>
+                    <p class="welcome-lead">
+                        I retrieve information from your uploaded files and provide answers strictly grounded in your documents.
+                    </p>
+                    
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <i data-lucide="shield-alert"></i>
+                            <h3>Strictly Grounded</h3>
+                            <p>Answers are generated ONLY using your sources. Zero training-data hallucinations.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i data-lucide="quote"></i>
+                            <h3>Exact Citations</h3>
+                            <p>Every claim maps back to a specific document page, section, or block.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i data-lucide="table"></i>
+                            <h3>Advanced Formats</h3>
+                            <p>Ask for document comparisons, bulleted insights, or structured summaries.</p>
+                        </div>
+                    </div>
+
+                    <div class="starter-suggestions" id="starter-suggestions-box" style="display: none;">
+                        <h3>Suggested Prompts</h3>
+                        <div class="suggestion-chips" id="suggestion-chips">
+                            <button class="suggestion-chip" data-prompt="Summarize the core themes of my uploaded documents.">
+                                Summarize my documents
+                            </button>
+                            <button class="suggestion-chip" data-prompt="What are the key insights and takeaways from the uploaded files?">
+                                Extract key insights
+                            </button>
+                            <button class="suggestion-chip" data-prompt="Compare the main concepts discussed across the different documents.">
+                                Compare documents
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <div class="chat-input-wrapper">
+                    <textarea id="chat-input" placeholder="Ask a question about your indexed knowledge..." rows="1" aria-label="Question input"></textarea>
+                    <button id="send-btn" disabled title="Send question">
+                        <i data-lucide="send"></i>
+                    </button>
+                </div>
+                <div class="chat-input-footer">
+                    <span>Model: Gemini 2.5 Flash • Context Grounded</span>
+                    <span id="rag-status-text">Index Ready</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Sidebar: Configuration & Source Inspection -->
+        <aside class="sidebar-right" id="sidebar-right">
+            <div class="sidebar-header">
+                <h3>Settings & Retrieval</h3>
+                <button id="close-right-sidebar" class="mobile-only icon-btn"><i data-lucide="x"></i></button>
+            </div>
+
+
+            <div class="panel-section">
+                <div class="section-title">Retrieval Mode</div>
+                <div class="form-group">
+                    <label for="retrieval-strategy">Retrieval Strategy</label>
+                    <select id="retrieval-strategy">
+                        <option value="embeddings">Vector Similarity (Embeddings)</option>
+                        <option value="keyword">Basic TF-IDF Search</option>
+                        <option value="all">Send All Text (Best for small docs)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group slide-control" id="chunk-size-group">
+                    <div class="slide-labels">
+                        <label for="chunk-size-slider">Chunk Size (chars)</label>
+                        <span id="chunk-size-val">800</span>
+                    </div>
+                    <input type="range" id="chunk-size-slider" min="200" max="2000" step="100" value="800">
+                </div>
+
+                <div class="form-group slide-control" id="top-k-group">
+                    <div class="slide-labels">
+                        <label for="top-k-slider">Top Matching Chunks</label>
+                        <span id="top-k-val">5</span>
+                    </div>
+                    <input type="range" id="top-k-slider" min="1" max="15" step="1" value="5">
+                </div>
+            </div>
+
+            <div class="panel-section flex-grow">
+                <div class="section-title">Retrieved Context Inspector</div>
+                <p class="section-desc">Chunks retrieved for the last question will appear here.</p>
+                <div class="context-inspector-content" id="context-inspector">
+                    <div class="empty-inspector">No questions asked yet. Ask a question to view matching text segments.</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Manual Scraper Fallback Modal -->
+    <div class="modal" id="scraper-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manual Content Scraper Fallback</h3>
+                <button class="close-modal" id="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>We could not fetch the URL contents automatically due to website restrictions. Please copy the main article text and paste it below:</p>
+                <div class="form-group">
+                    <label for="manual-url-title">Webpage Title / Name</label>
+                    <input type="text" id="manual-url-title" placeholder="e.g., Gemini 1.5 Announcement">
+                </div>
+                <div class="form-group">
+                    <label for="manual-url-address">Source URL</label>
+                    <input type="text" id="manual-url-address" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="manual-url-content">Webpage Main Text Content</label>
+                    <textarea id="manual-url-content" rows="10" placeholder="Paste the text from the webpage here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+                <button class="btn btn-primary" id="save-modal-btn">Index Text Content</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript modules -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
